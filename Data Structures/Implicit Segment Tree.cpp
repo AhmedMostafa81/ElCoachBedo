@@ -1,100 +1,60 @@
-// If you have Q queries over a range of [1, 10^9], max depth is ~30.
-// Maximum nodes created = Q * 30. 
-const int MAX_QUERIES = 200005;
-const int LOG = 32; 
-const int SZ = (MAX_QUERIES * LOG) + 5;
+struct ImplicitSegmentTree {
+    static const long long N = 1ll<<60;
+    struct Node {
+        int sum{}, lazy_add{};
+        int L{}, R{};
+        void add(int x, long long sz) {
+            sum += x * sz;
+            lazy_add += x;
+        }
+    };
+    std::vector<Node> seg_data{Node()};
 
-struct ImplicitSegTree {
-    int ptr = 1;
-    int root = 0; // 0 means no root yet (empty tree)
-    
-    int lc[SZ];
-    int rc[SZ];
-    long long sum[SZ];
+    void propagate(int ni, long long lx, long long rx) {
+        if(!seg_data[ni].lazy_add || rx - lx == 1) return;
 
-    void init() {
-        ptr = 1;
-        root = 0;
-        lc[0] = rc[0] = sum[0] = 0; // Node 0 is the universal "empty" null node
+        seg_data[seg_data[ni].L].add(seg_data[ni].lazy_add, (rx-lx)/2);
+        seg_data[seg_data[ni].R].add(seg_data[ni].lazy_add, (rx-lx)/2);
+
+        seg_data[ni].lazy_add = 0;
     }
 
-    // Pass `node` by REFERENCE (&) so we can modify the parent's lc/rc directly
-    void update(int& node, long long s, long long e, long long i, long long val) {
-        if (!node) {
-            node = ptr++;
-            lc[node] = rc[node] = sum[node] = 0; // Initialize new node cleanly
-        }
-        
-        sum[node] += val; // Apply point update going down
-        
-        if (s == e) return;
-        
-        long long mid = (s + e) >> 1;
-        if (i <= mid) {
-            update(lc[node], s, mid, i, val);
-        } else {
-            update(rc[node], mid + 1, e, i, val);
-        }
+    void check(int &x){
+        if(x) return;
+        x = (int)seg_data.size();
+        seg_data.push_back(Node());
     }
 
-    long long query(int node, long long s, long long e, long long l, long long r) {
-        // If we hit a non-existent node, or out of bounds, return 0 (neutral element)
-        if (!node || s > r || e < l) return 0;
-        
-        if (s >= l && e <= r) return sum[node];
-        
-        long long mid = (s + e) >> 1;
-        return query(lc[node], s, mid, l, r) + 
-               query(rc[node], mid + 1, e, l, r);
+    long long get(long long l, long long r, int ni=0, long long lx=0, long long rx=N){
+        if(lx >= l && rx <= r)
+            return seg_data[ni].sum;
+        if(rx <= l || lx >= r)
+            return 0;
+
+        check(seg_data[ni].L);
+        check(seg_data[ni].R);
+        propagate(ni, lx, rx);
+
+        long long mid = (lx + rx) / 2;
+        return get(l, r, seg_data[ni].L, lx, mid) + get(l, r, seg_data[ni].R, mid, rx);
+    }
+
+    void add(long long l, long long r, int v, int ni=0, long long lx=0, long long rx=N) {
+        if(lx >= l && rx <= r) {
+            seg_data[ni].add(v, rx-lx);
+            return;
+        }
+        if(rx <= l || lx >= r)
+            return;
+
+        check(seg_data[ni].L);
+        check(seg_data[ni].R);
+        propagate(ni, lx, rx);
+
+        long long mid = (lx + rx) / 2;
+        add(l, r, v, seg_data[ni].L, lx, mid);
+        add(l, r, v, seg_data[ni].R, mid, rx);
+
+        seg_data[ni].sum = seg_data[seg_data[ni].L].sum + seg_data[seg_data[ni].R].sum;
     }
 };
-
-
-
-
-#include <iostream>
-
-using namespace std;
-
-// ... [Paste the ImplicitSegTree struct here] ...
-ImplicitSegTree tree;
-
-int main() {
-    ios_base::sync_with_stdio(false);
-    cin.tie(NULL);
-
-    int q;
-    if (!(cin >> q)) return 0;
-
-    tree.init();
-    
-    // The domain of our problem. 
-    // Must be long long to avoid overflow when doing (lx + rx) >> 1
-    const long long MIN_X = 1;
-    const long long MAX_X = 1e9; 
-
-    while (q--) {
-        int type;
-        cin >> type;
-
-        if (type == 1) {
-            // Point Update: Add `val` to coordinate `pos`
-            long long pos, val;
-            cin >> pos >> val;
-            
-            // Note: We pass tree.root, and because it's passed by reference in 
-            // the struct, the very first update will assign tree.root = 1.
-            tree.update(tree.root, MIN_X, MAX_X, pos, val);
-        } 
-        else if (type == 2) {
-            // Range Query: Sum from coordinate `L` to `R`
-            long long L, R;
-            cin >> L >> R;
-            
-            long long ans = tree.query(tree.root, MIN_X, MAX_X, L, R);
-            cout << ans << "\n";
-        }
-    }
-
-    return 0;
-}

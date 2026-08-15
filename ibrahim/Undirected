@@ -1,0 +1,99 @@
+#include <iostream>
+using namespace std;
+const int N = 3e5 + 5;
+
+vector<pair<int,int>> adj[N]; // {child, edge_id}
+vector<pair<int,int>> edges;
+
+int dfs_num[N], low_link[N], dfn;
+bool is_bridge[N], is_art[N];
+
+int comp[N], c;
+stack<int> st;
+
+vector<int> tree[N]; // bridge tree / forest
+
+void addEdge(int u, int v) {
+    int id = edges.size();
+
+    edges.push_back({u, v});
+    adj[u].push_back({v, id});
+    adj[v].push_back({u, id});
+}
+
+void tarjan(int node, int parEdge = -1) {
+    dfs_num[node] = low_link[node] = ++dfn;
+    st.push(node);
+
+    int children = 0;
+
+    for (auto [child, id] : adj[node]) {
+        if (id == parEdge)
+            continue;
+
+        if (!dfs_num[child]) {
+            ++children;
+
+            tarjan(child, id);
+
+            low_link[node] = min(low_link[node], low_link[child]);
+
+            // Bridge
+            if (low_link[child] > dfs_num[node])
+                is_bridge[id] = true;
+
+            // Articulation point
+            if (parEdge != -1 && low_link[child] >= dfs_num[node])
+                is_art[node] = true;
+        }
+        else {
+            low_link[node] = min(low_link[node], dfs_num[child]);
+        }
+    }
+
+    // Root articulation case
+    if (parEdge == -1 && children > 1)
+        is_art[node] = true;
+
+    // Extract 2-edge-connected component
+    if (dfs_num[node] == low_link[node]) {
+        while (true) {
+            int x = st.top();
+            st.pop();
+
+            comp[x] = c;
+
+            if (x == node)
+                break;
+        }
+
+        ++c;
+    }
+}
+
+void buildTree() {
+    for (int id = 0; id < (int)edges.size(); ++id) {
+        if (!is_bridge[id])
+            continue;
+
+        auto [u, v] = edges[id];
+
+        int a = comp[u];
+        int b = comp[v];
+
+        tree[a].push_back(b);
+        tree[b].push_back(a);
+    }
+}
+
+void init(int n) {
+    for (int i = 0; i < n; ++i)
+        if (!dfs_num[i])
+            tarjan(i);
+
+    buildTree();
+}
+int main() {
+	// your code goes here
+	return 0;
+}

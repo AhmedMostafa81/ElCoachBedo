@@ -1,0 +1,77 @@
+#include <iostream>
+using namespace std;
+
+const int N = 3e5 + 5;
+
+vector<int> adj[N];
+
+int dfs_num[N], low_link[N], dfn;
+bool instack[N];
+
+stack<int> st;
+
+int comp[N], c;
+
+vector<int> dag[N]; // SCC condensation DAG
+
+void addEdge(int u, int v) {
+    adj[u].push_back(v);
+}
+
+void tarjan(int node) {
+    dfs_num[node] = low_link[node] = ++dfn;
+
+    st.push(node);
+    instack[node] = true;
+
+    for (int child : adj[node]) {
+
+        if (!dfs_num[child]) {
+            tarjan(child);
+
+            low_link[node] = min(low_link[node], low_link[child]);
+        }
+        else if (instack[child]) {
+            low_link[node] = min(low_link[node], dfs_num[child]);
+        }
+    }
+
+    // Extract SCC
+    if (dfs_num[node] == low_link[node]) {
+        while (true) {
+            int x = st.top();
+            st.pop();
+
+            instack[x] = false;
+            comp[x] = c;
+
+            if (x == node)
+                break;
+        }
+
+        ++c;
+    }
+}
+
+void buildDAG(int n) {
+    for (int u = 0; u < n; ++u) {
+        for (int v : adj[u]) {
+            if (comp[u] != comp[v])
+                dag[comp[u]].push_back(comp[v]);
+        }
+    }
+}
+
+void init(int n) {
+    for (int i = 0; i < n; ++i)
+        if (!dfs_num[i])
+            tarjan(i);
+
+    buildDAG(n);
+}
+
+
+int main() {
+	// your code goes here
+	return 0;
+}

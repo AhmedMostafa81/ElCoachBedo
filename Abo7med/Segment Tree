@@ -1,0 +1,66 @@
+
+
+struct Info {
+    // Identity elements (make sure when this is merged it causes no issues)
+    ll val = 0;
+};
+
+Info operator+(const Info &a, const Info &b) {
+    return {a.val + b.val};
+}
+
+template<class Info>
+struct SegmentTree {
+    int n;
+    vector<Info> info;
+    
+    void init(int sz){
+        n = sz;
+        info.assign(4*n, Info());
+        return;
+    }
+
+    void build(vector<Info>& init, int x, int lx, int rx){
+        if(rx-lx == 1){
+            info[x] = init[lx];
+            return;
+        }
+        int m = (rx + lx)/2;
+        build(init, 2*x, lx, m);
+        build(init, 2*x+1, m, rx);
+        pull(x);
+    }
+    void build(vector<Info>& init){
+        build(init, 1, 0, n);
+    }
+    
+    void pull(int x) {
+        info[x] = info[2 * x] + info[2 * x + 1];
+    }
+    
+    void update(int i, Info v, int x, int lx, int rx) {
+        if (rx - lx == 1) {
+            info[x] = v;
+            return;
+        }
+        int m = (lx + rx) / 2;
+        if(i < m) update(i, v, 2*x, lx, m);
+        else update(i, v, 2*x+1, m, rx);
+        pull(x);
+    }
+    
+    void update(int i, Info v) {
+        update(i, v, 1, 0, n);
+    }
+    
+    Info rangeQuery(int l, int r, int x, int lx, int rx) {
+        if (l >= rx || r <= lx || l >= r) return Info();
+        if (lx >= l && rx <= r) return info[x];
+        int m = (lx + rx) / 2;
+        return rangeQuery(l, r, 2*x, lx, m) + rangeQuery(l, r, 2*x+1, m, rx);
+    }
+    
+    Info rangeQuery(int l, int r) {
+        return rangeQuery(l, r, 1, 0, n);
+    }
+};

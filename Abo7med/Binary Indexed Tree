@@ -1,0 +1,44 @@
+
+
+struct BIT {
+    int sz;
+    vector<int> tree;
+    void init(int n){
+        sz=n;
+        tree.assign(n+1, 0);
+    }
+    // 0 based
+    void add(int k, int v){ 
+        k++;
+        while(k <= sz){
+            tree[k] += v;
+            k += k & -k;
+        }
+    }
+    // 1 based
+    int sum(int k){
+        int res = 0;
+        while(k >= 1){
+            res += tree[k];
+            k -= k & -k;
+        }
+        return res;
+    }
+    // 0 based (right exclusive)
+    int query(int l, int r){
+        if(r-l <= 0) return 0;
+        return sum(r) - sum(l);
+    }
+    // finds first positions where prefix sum is >= k
+    int lower_bound(int k){
+        int pos = 0;
+        for(int i=20; i>=0; i--){
+            if(pos + (1 << i) <= sz && tree[pos + (1 << i)] < k){
+                pos += (1 << i);
+                k -= tree[pos];
+            }
+        }
+        return pos;
+    }
+ 
+};

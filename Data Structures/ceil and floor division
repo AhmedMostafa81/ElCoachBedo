@@ -1,0 +1,27 @@
+
+ll floorDiv(ll a, ll b){
+    assert(b != 0);
+    if(b < 0){
+        a *= -1;
+        b *= -1;
+    }
+    if(a < 0){
+        return (a - b + 1)/b;
+    }
+    else return a/b;
+}
+
+ll ceilDiv(ll a, ll b){
+    assert(b != 0);
+    if(b < 0){
+        a *= -1;
+        b *= -1;
+    }
+    if(a >= 0){
+        return (a + b - 1)/b;
+    }
+    else{
+        return a/b;
+    }
+}
+

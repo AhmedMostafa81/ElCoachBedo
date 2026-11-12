@@ -288,6 +288,7 @@ ld triangleAreaUsingMedians(ld a, ld b, ld c){
     return 4.0L/3 * triangleAreaUsingSides(a, b, c);
 }
 
+// pick's theorem: S(area) = I(points inside) + B(points on border) / 2 - 1
 
 const int mxN=1e5, MOD=998244353;
 

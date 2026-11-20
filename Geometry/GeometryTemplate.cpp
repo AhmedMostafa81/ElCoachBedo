@@ -52,6 +52,33 @@ T cross(Point<T> p1, Point<T> p2){
 }
 
 
+
+template<class T>
+vector<Point<T>> convex_hull(vector<Point<T>> points){
+    sort(points.begin(), points.end(), [](const Point<T>& p1, const Point<T>& p2){
+        if(p1.X == p2.X) return p1.Y < p2.Y;
+        return p1.X < p2.X;
+    });
+    points.erase(unique(points.begin(), points.end()), points.end());
+    if((int)points.size() < 3) return points;
+    vector<Point<T>> hull;
+    for(int i=0; i<(int)points.size(); i++){
+        while((int)hull.size() > 1 && sgn(cross(hull.back()-hull[(int)hull.size()-2], points[i]-hull[(int)hull.size()-2])) <= 0){
+            hull.pop_back();
+        }
+        hull.push_back(points[i]);
+    }
+    int lowerLen = (int)hull.size();
+    for(int i=(int)points.size()-2; i>=0; i--){
+        while((int)hull.size() > lowerLen && sgn(cross(hull.back()-hull[(int)hull.size()-2], points[i]-hull[(int)hull.size()-2])) <= 0){
+            hull.pop_back();
+        }
+        hull.push_back(points[i]);
+    }
+    hull.pop_back();
+    return hull;
+}
+
 // returns rotation of P1 around P2, by angle ang (in radians);
 fpt rotate(fpt p1, fpt p2, ld ang){
     p1 -= p2;
@@ -186,7 +213,7 @@ vector<fpt> line_circle_intersection(Point<T> c, T r, Point<T> a, Point<T> b){
 }
 
 
-vector<fpt> circle_circle_intersection(fpt c1, ld r1, fpt c2, ld r2) {
+vector<fpt> circle_circle_intersection_points(fpt c1, ld r1, fpt c2, ld r2) {
     if (sgn(mag(c1 - c2)) == 0 && sgn(r1 - r2) == 0) {
         if (sgn(r1) == 0) return {c1};
         return vector<fpt>(3);
@@ -205,6 +232,20 @@ vector<fpt> circle_circle_intersection(fpt c1, ld r1, fpt c2, ld r2) {
     else{
         return {rotate(base, c1, ang),rotate(base, c1, -ang)};
     }
+}
+ 
+
+ld circle_circle_intersection_area(fpt c1, ld r1, fpt c2, ld r2) {
+    // handle distant and nested circles before calling
+    // if d >= r1+r2 ans = 0
+    // if(d <= abs(r1-r2)) ans = area of smaller circle
+
+    ld d = mag(c1 - c2); 
+    ld phi = (acos((r1*r1 + (d * d) - r2*r2) / (2.0 * r1 * d))) * 2.0;
+    ld theta = (acos((r2*r2 + (d * d) - r1*r1) / (2.0 * r2 * d))) * 2.0;
+    ld area1 = 0.5 * phi * r1*r1 - 0.5 * r1*r1 * sin(phi);
+    ld area2 = 0.5 * theta * r2*r2 - 0.5 * r2*r2 * sin(theta);
+    return area1+area2;
 }
  
 template<class T>
@@ -288,9 +329,8 @@ ld triangleAreaUsingMedians(ld a, ld b, ld c){
     return 4.0L/3 * triangleAreaUsingSides(a, b, c);
 }
 
-// pick's theorem: S(area) = I(points inside) + B(points on border) / 2 - 1
 
-const int mxN=1e5, MOD=998244353;
+const int mxN=, MOD=;
 
 void go() {
 

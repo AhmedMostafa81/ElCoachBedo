@@ -239,12 +239,17 @@ ld circle_circle_intersection_area(fpt c1, ld r1, fpt c2, ld r2) {
     // handle distant and nested circles before calling
     // if d >= r1+r2 ans = 0
     // if(d <= abs(r1-r2)) ans = area of smaller circle
+    // check the above using integers if possible
 
     ld d = mag(c1 - c2); 
-    ld phi = (acos((r1*r1 + (d * d) - r2*r2) / (2.0 * r1 * d))) * 2.0;
-    ld theta = (acos((r2*r2 + (d * d) - r1*r1) / (2.0 * r2 * d))) * 2.0;
-    ld area1 = 0.5 * phi * r1*r1 - 0.5 * r1*r1 * sin(phi);
-    ld area2 = 0.5 * theta * r2*r2 - 0.5 * r2*r2 * sin(theta);
+    auto central_angle = [&](ld a, ld b) -> ld {
+        ld cos_half = clamp((a * a + d * d - b * b) / (2.0L * a * d), -1.0L, 1.0L);
+        return 2.0L * acos(cos_half);
+    };
+    ld phi = central_angle(r1, r2);
+    ld theta = central_angle(r2, r1);
+    ld area1 = 0.5L * r1 * r1 * (phi - sin(phi));
+    ld area2 = 0.5L * r2 * r2 * (theta - sin(theta));
     return area1+area2;
 }
  
